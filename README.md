@@ -5,8 +5,9 @@
 ----
 
 # RAK4631-Kit-1-RAK1901-RAK1902-RAK1903
-| <img src="./assets/RAK-Whirls.png" alt="Modules" width="150"> | <img src="./assets/rakstar.jpg" alt="RAKstar" width="100"> |    
-| :-: | :-: |     
+| <img src="./assets/RAK-Whirls.png" alt="Modules"> | <img src="./assets/rakstar.jpg" alt="RAKstar" > | <img src="./assets/Kit1.png" alt="Kit 1" > |    
+| :-: | :-: | :-: |     
+
 This is an example code for WisBlock Weather Kit with the RAK1901, RAK1902 and RAK1903. 
 
 ## _REMARK_
