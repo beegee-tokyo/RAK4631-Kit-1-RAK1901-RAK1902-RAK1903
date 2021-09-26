@@ -27,11 +27,11 @@ struct weather_data_s
 	uint8_t data_flag4 = 0x68;	// 6
 	uint8_t humid_1 = 0;		// 7
 	uint8_t data_flag5 = 0x02;	// 8
-	uint8_t data_flag6 = 0x67;  // 9
+	uint8_t data_flag6 = 0x67;	// 9
 	uint8_t temp_1 = 0;			// 10
 	uint8_t temp_2 = 0;			// 11
-	uint8_t data_flag7 = 0x06;  // 12
-	uint8_t data_flag8 = 0x73;  // 13
+	uint8_t data_flag7 = 0x06;	// 12
+	uint8_t data_flag8 = 0x73;	// 13
 	uint8_t press_1 = 0;		// 14
 	uint8_t press_2 = 0;		// 15
 	uint8_t data_flag9 = 0x05;	// 16
@@ -40,12 +40,30 @@ struct weather_data_s
 	uint8_t light_2 = 0;		// 19
 };
 extern weather_data_s g_weather_data;
-#define WEATHER_DATA_LEN 19		  // sizeof(g_weather_data) with BME680
-
+#define WEATHER_DATA_LEN 19 // sizeof(g_weather_data) with BME680
 
 #include <Wire.h>
-/** Include the SX126x-API */
+/** Include the WisBlock-API */
 #include <WisBlock-API.h>
+
+// Debug output set to 0 to disable app debug output
+#ifndef MY_DEBUG
+#define MY_DEBUG 0
+#endif
+
+#if MY_DEBUG > 0
+#define MYLOG(tag, ...)           \
+	do                            \
+	{                             \
+		if (tag)                  \
+			PRINTF("[%s] ", tag); \
+		PRINTF(__VA_ARGS__);      \
+		PRINTF("\n");             \
+	} while (0)
+#else
+#define MYLOG(...)
+#endif
+
 /** Application function definitions */
 void setup_app(void);
 bool init_app(void);

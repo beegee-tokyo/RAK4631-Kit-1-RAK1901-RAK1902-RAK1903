@@ -11,7 +11,7 @@
 This is an example code for WisBlock Weather Kit with the RAK1901, RAK1902 and RAK1903. 
 
 ## _REMARK_
-It is based on my low power event driven library [WisBlock-API](https://github.com/beegee-tokyo/RAK4631-Quick-Start-Examples) 
+This example is using my [WisBlock API](https://github.com/beegee-tokyo/WisBlock-API) which helps to create low power consumption application and taking the load to handle communications from your shoulder. 
 
 ----
 
@@ -47,18 +47,18 @@ The libraries are all listed in the **`platformio.ini`** and are automatically i
 
 # Setting up LoRaWAN credentials
 The LoRaWAN settings can be defined in three different ways. 
-- Over BLE with [My nRF52 Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.my_nrf52_tb)
+- Over BLE with [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox)
 - Over USB with [AT Commands](./AT-Commands.md)
 - Hardcoded in the sources (_**ABSOLUTELY NOT RECOMMENDED**_)
 
 ## 1) Setup over BLE
-Using the [My nRF52 Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.my_nrf52_tb) you can connect to the WisBlock over BLE and setup all LoRaWAN parameters like
+Using the [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox) you can connect to the WisBlock over BLE and setup all LoRaWAN parameters like
 - Region
 - OTAA/ABP
 - Confirmed/Unconfirmed message
 - ...
 
-More details can be found in the [My nRF52 Toolbox repo](https://github.com/beegee-tokyo/My-nRF52-Toolbox/blob/master/README.md)
+More details can be found in the [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox)
 
 The device is advertising over BLE only the first 30 seconds after power up and then again for 15 seconds after wakeup for measurements. The device is advertising as **`RAK-GNSS-xx`** where xx is the BLE MAC address of the device.
 
@@ -67,41 +67,54 @@ Using the AT command interface the WisBlock can be setup over the USB port.
 
 A detailed manual for the AT commands are in [AT-Commands.md](./AT-Commands.md)
 
+Here is an example for the typical AT commands required to get the device ready (EUI's and Keys are examples):
+```log
+// Setup AppEUI
+AT+APPEUI=70b3d57ed00201e1
+// Setup DevEUI
+AT+DEVEUI=ac1f09fffe03efdc
+// Setup AppKey
+AT+APPKEY=2b84e0b09b68e5cb42176fe753dcee79
+// Set automatic send frequency in seconds
+AT+SENDFREQ=60
+// Set data rate
+AT+DR=3
+// Set LoRaWAN region (here US915)
+AT+BAND=8
+// Reset node to save the new parameters
+ATZ
+// After reboot, start join request
+AT+JOIN=1,0,8,10
+```
+
 ## _REMARK_
 The AT command format used here is _**NOT**_ compatible with the RAK5205/RAK7205 AT commands.
 
 ## 3) Hardcoded LoRaWAN settings
+`void api_read_credentials(void);`    
 `void api_set_credentials(void);`
-This informs the API that hard coded LoRaWAN credentials will be used. If credentials are sent over USB or from My nRF Toolbox, the received credentials will be ignored. _**It is strongly suggest NOT TO USE hard coded credentials to avoid duplicate node definitions**_    
-If hard coded LoRaWAN credentials are used, they must be set before this function is called. Example:    
+If LoRaWAN credentials need to be hardcoded (e.g. the region, the send repeat time, ...) this can be done in `setup_app()`.
+First the saved credentials must be read from flash with `api_read_credentials();`, then credentials can be changed. After changing the credentials must be saved with `api_set_credentials()`.
+As the WisBlock API checks if any changes need to be saved, the changed values will be only saved on the first boot after flashing the application.     
+Example:    
 ```c++
-g_lorawan_settings.auto_join = false;							// Flag if node joins automatically after reboot
-g_lorawan_settings.otaa_enabled = true;							// Flag for OTAA or ABP
-memcpy(g_lorawan_settings.node_device_eui, node_device_eui, 8); // OTAA Device EUI MSB
-memcpy(g_lorawan_settings.node_app_eui, node_app_eui, 8);		// OTAA Application EUI MSB
-memcpy(g_lorawan_settings.node_app_key, node_app_key, 16);		// OTAA Application Key MSB
-memcpy(g_lorawan_settings.node_nws_key, node_nws_key, 16);		// ABP Network Session Key MSB
-memcpy(g_lorawan_settings.node_apps_key, node_apps_key, 16);	// ABP Application Session key MSB
-g_lorawan_settings.node_dev_addr = 0x26021FB4;					// ABP Device Address MSB
-g_lorawan_settings.send_repeat_time = 120000;					// Send repeat time in milliseconds: 2 * 60 * 1000 => 2 minutes
-g_lorawan_settings.adr_enabled = false;							// Flag for ADR on or off
-g_lorawan_settings.public_network = true;						// Flag for public or private network
-g_lorawan_settings.duty_cycle_enabled = false;					// Flag to enable duty cycle (validity depends on Region)
-g_lorawan_settings.join_trials = 5;								// Number of join retries
-g_lorawan_settings.tx_power = 0;								// TX power 0 .. 15 (validity depends on Region)
-g_lorawan_settings.data_rate = 3;								// Data rate 0 .. 15 (validity depends on Region)
-g_lorawan_settings.lora_class = 0;								// LoRaWAN class 0: A, 2: C, 1: B is not supported
-g_lorawan_settings.subband_channels = 1;						// Subband channel selection 1 .. 9
-g_lorawan_settings.app_port = 2;								// Data port to send data
-g_lorawan_settings.confirmed_msg_enabled = LMH_UNCONFIRMED_MSG; // Flag to enable confirmed messages
-g_lorawan_settings.resetRequest = true;							// Command from BLE to reset device
+// Read credentials from Flash
+api_read_credentials();
+// Make changes to the credentials
+g_lorawan_settings.send_repeat_time = 240000;                   // Default is 2 minutes
+g_lorawan_settings.subband_channels = 2;                        // Default is subband 1
+g_lorawan_settings.app_port = 4;                                // Default is 2
+g_lorawan_settings.confirmed_msg_enabled = LMH_CONFIRMED_MSG;   // Default is UNCONFIRMED
 g_lorawan_settings.lora_region = LORAMAC_REGION_AS923_3;		// LoRa region
-// Inform API about hard coded LoRaWAN settings
+// Save hard coded LoRaWAN settings
 api_set_credentials();
 ```
 
-_**REMARK!**_    
+_**REMARK 1**_    
 Hard coded credentials must be set in `void setup_app(void)`!
+
+_**REMARK 2**_    
+Keep in mind that parameters that are changed from with this method can be changed over AT command or BLE _**BUT WILL BE RESET AFTER A REBOOT**_!
 
 ----
 
@@ -119,7 +132,7 @@ The compiled files are located in the [./Generated](./Generated) folder. Each su
 x.y.z is the version number. The version number is setup in the [./platformio.ini](./platformio.ini) file.    
 YYYYMMddhhmmss is the timestamp of the compilation.
 
-The generated **`.hex`** file can be used as well to update the device over BLE using either [My nRF52 Toolbox repo](https://github.com/beegee-tokyo/My-nRF52-Toolbox/blob/master/README.md) or [Nordic nRF Toolbox](https://play.google.com/store/apps/details?id=no.nordicsemi.android.nrftoolbox) or [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp)
+The generated **`.zip`** file can be used as well to update the device over BLE using either [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox) or [Nordic nRF Toolbox](https://play.google.com/store/apps/details?id=no.nordicsemi.android.nrftoolbox) or [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp)
 
 ----
 

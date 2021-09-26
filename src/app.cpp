@@ -25,6 +25,9 @@ BaseType_t g_higher_priority_task_woken = pdTRUE;
 /** Send Fail counter **/
 uint8_t send_fail = 0;
 
+/** Flag for low battery protection */
+bool low_batt_protection = false;
+
 /** LoRaWAN packet */
 weather_data_s g_weather_data;
 
@@ -118,18 +121,39 @@ void app_event_handler(void)
 		}
 		else
 		{
+			if (!low_batt_protection)
+			{
 
-			// Read temperature and humidity
-			read_th();
-			// Read air pressure
-			read_press();
-			// Read luminosity
-			read_light();
+				// Read temperature and humidity
+				read_th();
+				// Read air pressure
+				read_press();
+				// Read luminosity
+				read_light();
+			}
 
 			// Get battery level
 			batt_level.batt16 = read_batt() / 10;
 			g_weather_data.batt_1 = batt_level.batt8[1];
 			g_weather_data.batt_2 = batt_level.batt8[0];
+
+			// Protection against battery drain
+			if (batt_level.batt16 < 290)
+			{
+				// Battery is very low, change send time to 1 hour to protect battery
+				low_batt_protection = true;						   // Set low_batt_protection active
+				g_task_wakeup_timer.setPeriod(1 * 60 * 60 * 1000); // Set send time to one hour
+				g_task_wakeup_timer.reset();
+				MYLOG("APP", "Battery protection activated");
+			}
+			else if ((batt_level.batt16 > 410) && low_batt_protection)
+			{
+				// Battery is higher than 4V, change send time back to original setting
+				low_batt_protection = false;
+				g_task_wakeup_timer.setPeriod(g_lorawan_settings.send_repeat_time);
+				g_task_wakeup_timer.reset();
+				MYLOG("APP", "Battery protection deactivated");
+			}
 
 			lmh_error_status result = send_lora_packet((uint8_t *)&g_weather_data, WEATHER_DATA_LEN);
 			switch (result)
