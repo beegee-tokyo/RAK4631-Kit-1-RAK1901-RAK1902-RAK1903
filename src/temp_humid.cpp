@@ -35,9 +35,8 @@ void read_th(void)
 
 		MYLOG("T_H", "T: %.2f H: %.2f", (float)temp_int / 10.0, (float)humid_int / 2.0);
 
-		g_weather_data.humid_1 = (uint8_t)(humid_int);
-		g_weather_data.temp_1 = (uint8_t)(temp_int >> 8);
-		g_weather_data.temp_2 = (uint8_t)(temp_int);
+		g_solution_data.addRelativeHumidity(LPP_CHANNEL_HUMID, shtc3.toPercent());
+		g_solution_data.addTemperature(LPP_CHANNEL_TEMP, shtc3.toDegC());
 	}
 	else
 	{

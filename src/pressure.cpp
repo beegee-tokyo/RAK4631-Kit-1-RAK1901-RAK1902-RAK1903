@@ -30,16 +30,20 @@ void read_press(void)
 {
 	lps22hb.setDataRate(LPS22_RATE_75_HZ); // LPS22_RATE_ONE_SHOT
 	MYLOG("PRESS", "Reading LPS22HB");
-	sensors_event_t temp;
-	sensors_event_t pressure;
+	delay(1000);
+	sensors_event_t temp_event;
+	sensors_event_t pressure_event;
 
-	lps22hb.getEvent(&pressure, &temp);
+	lps22hb.getEvent(&pressure_event, &temp_event);
 
-	uint16_t press_int = (uint16_t)(pressure.pressure * 10);
+	uint16_t press_int = (uint16_t)(pressure_event.pressure * 10);
 
 	MYLOG("PRESS", "P: %.2f", (float)press_int / 10.0);
 
-	g_weather_data.press_1 = (uint8_t)(press_int >> 8);
-	g_weather_data.press_2 = (uint8_t)(press_int);
+	// g_weather_data.press_1 = (uint8_t)(press_int >> 8);
+	// g_weather_data.press_2 = (uint8_t)(press_int);
+
+	g_solution_data.addBarometricPressure(LPP_CHANNEL_PRESS_2, pressure_event.pressure);
+
 	lps22hb.setDataRate(LPS22_RATE_ONE_SHOT); // LPS22_RATE_ONE_SHOT
 }

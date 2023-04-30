@@ -15,36 +15,10 @@
 
 #include <Arduino.h>
 /** Add you required includes after Arduino.h */
-
-// LoRaWan functions
-struct weather_data_s
-{
-	uint8_t data_flag1 = 0x08;	// 1
-	uint8_t data_flag2 = 0x02;	// 2
-	uint8_t batt_1 = 0;			// 3
-	uint8_t batt_2 = 0;			// 4
-	uint8_t data_flag3 = 0x07;	// 5
-	uint8_t data_flag4 = 0x68;	// 6
-	uint8_t humid_1 = 0;		// 7
-	uint8_t data_flag5 = 0x02;	// 8
-	uint8_t data_flag6 = 0x67;	// 9
-	uint8_t temp_1 = 0;			// 10
-	uint8_t temp_2 = 0;			// 11
-	uint8_t data_flag7 = 0x06;	// 12
-	uint8_t data_flag8 = 0x73;	// 13
-	uint8_t press_1 = 0;		// 14
-	uint8_t press_2 = 0;		// 15
-	uint8_t data_flag9 = 0x05;	// 16
-	uint8_t data_flag10 = 0x65; // 17
-	uint8_t light_1 = 0;		// 18
-	uint8_t light_2 = 0;		// 19
-};
-extern weather_data_s g_weather_data;
-#define WEATHER_DATA_LEN 19 // sizeof(g_weather_data) with BME680
-
 #include <Wire.h>
+
 /** Include the WisBlock-API */
-#include <WisBlock-API.h>
+#include <WisBlock-API-V2.h> // Click to install library: http://librarymanager/All#WisBlock-API-V2
 
 // Debug output set to 0 to disable app debug output
 #ifndef MY_DEBUG
@@ -74,6 +48,17 @@ void lora_data_handler(void);
 /** Application stuff */
 extern BaseType_t g_higher_priority_task_woken;
 
+// LoRaWan functions
+#include "wisblock_cayenne.h"
+// Cayenne LPP Channel numbers per sensor value
+#define LPP_CHANNEL_BATT 1	  // Base Board
+#define LPP_CHANNEL_HUMID 2			   // RAK1901
+#define LPP_CHANNEL_TEMP 3			   // RAK1901
+#define LPP_CHANNEL_PRESS 4			   // RAK1902
+#define LPP_CHANNEL_LIGHT 5			   // RAK1903
+
+extern WisCayenne g_solution_data;
+
 /** Sensor functions */
 bool init_th(void);
 void read_th(void);
@@ -81,12 +66,5 @@ bool init_press(void);
 void read_press(void);
 bool init_light(void);
 void read_light();
-
-/** Battery level uinion */
-union batt_s
-{
-	uint16_t batt16 = 0;
-	uint8_t batt8[2];
-};
 
 #endif

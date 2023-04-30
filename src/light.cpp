@@ -4,9 +4,9 @@
  * @brief Initialize and read data from OPT3001 sensor
  * @version 0.1
  * @date 2021-09-19
- * 
+ *
  * @copyright Copyright (c) 2021
- * 
+ *
  */
 #include "app.h"
 #include <ClosedCube_OPT3001.h>
@@ -16,7 +16,7 @@ ClosedCube_OPT3001 opt3001;
 
 /**
  * @brief Initialize the Light sensor
- * 
+ *
  * @return true if sensor found and configuration success
  * @return false if error occured
  */
@@ -45,7 +45,7 @@ bool init_light(void)
 
 /**
  * @brief Read value from light sensor
- * 
+ *
  */
 void read_light()
 {
@@ -53,17 +53,13 @@ void read_light()
 	OPT3001 result = opt3001.readResult();
 	if (result.error == NO_ERROR)
 	{
-		uint16_t light_int = (uint16_t)(result.lux);
+		MYLOG("LIGHT", "L: %.2f", result.lux);
 
-		MYLOG("LIGHT", "L: %.2f", (float)light_int / 1.0);
-
-		g_weather_data.light_1 = (uint8_t)(light_int >> 8);
-		g_weather_data.light_2 = (uint8_t)(light_int);
+		g_solution_data.addLuminosity(LPP_CHANNEL_LIGHT, (uint32_t)(result.lux));
 	}
 	else
 	{
 		MYLOG("LIGHT", "Error reading OPT3001");
-		g_weather_data.light_1 = 0x00;
-		g_weather_data.light_2 = 0x00;
+		g_solution_data.addLuminosity(LPP_CHANNEL_LIGHT, 0);
 	}
 }

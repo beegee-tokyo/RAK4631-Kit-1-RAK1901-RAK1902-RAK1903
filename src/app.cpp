@@ -1,20 +1,23 @@
 /**
  * @file app.cpp
  * @author Bernd Giesecke (bernd.giesecke@rakwireless.com)
- * @brief Application specific functions. Mandatory to have init_app(), 
+ * @brief Application specific functions. Mandatory to have init_app(),
  *        app_event_handler(), ble_data_handler(), lora_data_handler()
  *        and lora_tx_finished()
  * @version 0.1
  * @date 2021-04-23
- * 
+ *
  * @copyright Copyright (c) 2021
- * 
+ *
  */
 
 #include "app.h"
 
 /** Set the device name, max length is 10 characters */
 char g_ble_dev_name[10] = "RAK-WEA";
+
+/** Packet buffer for sending */
+WisCayenne g_solution_data(255);
 
 /** Flag showing if TX cycle is ongoing */
 bool lora_busy = false;
@@ -28,31 +31,57 @@ uint8_t send_fail = 0;
 /** Flag for low battery protection */
 bool low_batt_protection = false;
 
-/** LoRaWAN packet */
-weather_data_s g_weather_data;
-
-/** Battery level uinion */
-batt_s batt_level;
+/** Flag for temp/humid sensor */
+bool has_rak1901 = false;
+/** Flag for pressure sensor */
+bool has_rak1902 = false;
+/** flag for light sensor */
+bool has_rak1903 = false;
 
 /**
  * @brief Application specific setup functions
- * 
+ *
  */
 void setup_app(void)
 {
 	// Enable BLE
 	g_enable_ble = true;
+
+#if API_DEBUG == 0
+	// Initialize Serial for debug output
+	Serial.begin(115200);
+
+	time_t serial_timeout = millis();
+	// On nRF52840 the USB serial is not available immediately
+	while (!Serial)
+	{
+		if ((millis() - serial_timeout) < 5000)
+		{
+			delay(100);
+			digitalWrite(LED_GREEN, !digitalRead(LED_GREEN));
+		}
+		else
+		{
+			break;
+		}
+	}
+#endif
 }
 
 /**
  * @brief Application specific initializations
- * 
+ *
  * @return true Initialization success
  * @return false Initialization failure
  */
 bool init_app(void)
 {
 	MYLOG("APP", "init_app");
+
+	bool init_result = true;
+
+	// Reset the packet
+	g_solution_data.reset();
 
 	Wire.begin();
 	Wire.setClock(400000);
@@ -65,31 +94,41 @@ bool init_app(void)
 			MYLOG("APP", "Found device on adresse %0X", adr);
 		}
 	}
-	if (!init_th())
+
+	has_rak1901 = init_th();
+
+	if (!has_rak1901)
 	{
 		MYLOG("APP", "SHTC3 error");
-		return false;
+		init_result = false;
+	}
+	else
+	{
+		read_th();
 	}
 
-	read_th();
-
-	if (!init_press())
+	has_rak1902 = init_press();
+	if (!has_rak1902)
 	{
 		MYLOG("APP", "LPS22HB error");
-		return false;
+		init_result = false;
+	}
+	else
+	{
+		read_press();
 	}
 
-	read_press();
-
-	if (!init_light())
+	has_rak1903 = init_light();
+	if (!has_rak1903)
 	{
 		MYLOG("APP", "OPT3001 error");
-		return false;
+		init_result = false;
 	}
-
-	read_light();
-
-	return true;
+	else
+	{
+		read_light();
+	}
+	return init_result;
 }
 
 /**
@@ -111,6 +150,9 @@ void app_event_handler(void)
 			restart_advertising(15);
 		}
 
+		// Reset the packet
+		g_solution_data.reset();
+
 		if (lora_busy)
 		{
 			MYLOG("APP", "LoRaWAN TX cycle not finished, skip this event");
@@ -123,29 +165,36 @@ void app_event_handler(void)
 		{
 			if (!low_batt_protection)
 			{
-
-				// Read temperature and humidity
-				read_th();
-				// Read air pressure
-				read_press();
-				// Read luminosity
-				read_light();
+				if (has_rak1901)
+				{
+					// Read temperature and humidity
+					read_th();
+				}
+				if (has_rak1902)
+				{
+					// Read air pressure
+					read_press();
+				}
+				if (has_rak1903)
+				{
+					// Read luminosity
+					read_light();
+				}
 			}
 
 			// Get battery level
-			batt_level.batt16 = read_batt() / 10;
-			g_weather_data.batt_1 = batt_level.batt8[1];
-			g_weather_data.batt_2 = batt_level.batt8[0];
+			float batt_level_f = read_batt();
+			g_solution_data.addVoltage(LPP_CHANNEL_BATT, batt_level_f / 1000.0);
 
 			// Protection against battery drain
-			if (batt_level.batt16 < 290)
+			if (batt_level_f < 2900)
 			{
 				// Battery is very low, change send time to 1 hour to protect battery
-				low_batt_protection = true;						   // Set low_batt_protection active
+				low_batt_protection = true;			   // Set low_batt_protection active
 				api_timer_restart(1 * 60 * 60 * 1000); // Set send time to one hour
 				MYLOG("APP", "Battery protection activated");
 			}
-			else if ((batt_level.batt16 > 410) && low_batt_protection)
+			else if ((batt_level_f > 4100) && low_batt_protection)
 			{
 				// Battery is higher than 4V, change send time back to original setting
 				low_batt_protection = false;
@@ -153,32 +202,52 @@ void app_event_handler(void)
 				MYLOG("APP", "Battery protection deactivated");
 			}
 
-			lmh_error_status result = send_lora_packet((uint8_t *)&g_weather_data, WEATHER_DATA_LEN);
-			switch (result)
+			if (g_lorawan_settings.lorawan_enable)
 			{
-			case LMH_SUCCESS:
-				MYLOG("APP", "Packet enqueued");
-				/// \todo set a flag that TX cycle is running
-				lora_busy = true;
-				if (g_ble_uart_is_connected)
+				// Enqueue the packet
+				lmh_error_status result = send_lora_packet(g_solution_data.getBuffer(), g_solution_data.getSize());
+				switch (result)
 				{
-					g_ble_uart.println("Packet enqueued");
+				case LMH_SUCCESS:
+					MYLOG("APP", "Packet enqueued");
+					/// \todo set a flag that TX cycle is running
+					lora_busy = true;
+					if (g_ble_uart_is_connected)
+					{
+						g_ble_uart.println("Packet enqueued");
+					}
+					break;
+				case LMH_BUSY:
+					MYLOG("APP", "LoRa transceiver is busy");
+					if (g_ble_uart_is_connected)
+					{
+						g_ble_uart.println("LoRa transceiver is busy");
+					}
+					break;
+				case LMH_ERROR:
+					MYLOG("APP", "Packet error, too big to send with current DR");
+					if (g_ble_uart_is_connected)
+					{
+						g_ble_uart.println("Packet error, too big to send with current DR");
+					}
+					break;
 				}
-				break;
-			case LMH_BUSY:
-				MYLOG("APP", "LoRa transceiver is busy");
-				if (g_ble_uart_is_connected)
+			}
+			else
+			{
+				uint8_t packet_buffer[g_solution_data.getSize() + 8];
+				memcpy(packet_buffer, g_lorawan_settings.node_device_eui, 8);
+				memcpy(&packet_buffer[8], g_solution_data.getBuffer(), g_solution_data.getSize());
+
+				// Send packet over LoRa
+				if (send_p2p_packet(packet_buffer, g_solution_data.getSize() + 8))
 				{
-					g_ble_uart.println("LoRa transceiver is busy");
+					MYLOG("APP", "P2P packet enqueued");
 				}
-				break;
-			case LMH_ERROR:
-				MYLOG("APP", "Packet error, too big to send with current DR");
-				if (g_ble_uart_is_connected)
+				else
 				{
-					g_ble_uart.println("Packet error, too big to send with current DR");
+					MYLOG("APP", "P2P packet too big");
 				}
-				break;
 			}
 		}
 	}
@@ -186,7 +255,7 @@ void app_event_handler(void)
 
 /**
  * @brief Handle BLE UART data
- * 
+ *
  */
 void ble_data_handler(void)
 {
@@ -211,7 +280,7 @@ void ble_data_handler(void)
 
 /**
  * @brief Handle received LoRa Data
- * 
+ *
  */
 void lora_data_handler(void)
 {

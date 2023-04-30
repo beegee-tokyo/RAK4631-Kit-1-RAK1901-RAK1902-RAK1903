@@ -10,20 +10,20 @@
 
 This is an example code for WisBlock Weather Kit with the RAK1901, RAK1902 and RAK1903. 
 
-## _REMARK_
-This example is using my [WisBlock API](https://github.com/beegee-tokyo/WisBlock-API) which helps to create low power consumption application and taking the load to handle communications from your shoulder. 
+## _REMARK 1_
+This example is using my [WisBlock API-V2](https://github.com/beegee-tokyo/WisBlock-API-V2) ⤴️ which helps to create low power consumption application and taking the load to handle communications from your shoulder. 
 
 ----
 
 # Hardware used
 - [RAK4631](https://docs.rakwireless.com/Product-Categories/WisBlock/RAK4631/Overview/) WisBlock Core module
-- [RAK5005-O](https://docs.rakwireless.com/Product-Categories/WisBlock/RAK5005-O/Overview/) WisBlock Base board
+- [RAK19007](https://docs.rakwireless.com/Product-Categories/WisBlock/RAK19007/Overview/) WisBlock Base board
 - [RAK1901](https://docs.rakwireless.com/Product-Categories/WisBlock/RAK1901/Overview/) WisBlock Temperature and Humidty Sensor
 - [RAK1902](https://docs.rakwireless.com/Product-Categories/WisBlock/RAK1902/Overview/) WisBlock Barometer Pressure Sensor
 - [RAK1903](https://docs.rakwireless.com/Product-Categories/WisBlock/RAK1903/Overview/) WisBlock Ambient Light Sensor
 
 ## _REMARK_
-All of these modules can be bought together with a matching enclosure as [WisBlock Kit 1](https://store.rakwireless.com/collections/kits-bundles/products/wisblock-kit-1-weather-monitor) 
+All of these modules can be bought together with a matching enclosure as [WisBlock Kit 1](https://store.rakwireless.com/collections/kits-bundles/products/wisblock-kit-1-weather-monitor) ⤴️
 
 ## Power consumption
 The MCU and LoRa transceiver go into sleep mode between measurement cycles to save power. I could measure a sleep current of 40uA of the whole system. 
@@ -31,14 +31,14 @@ The MCU and LoRa transceiver go into sleep mode between measurement cycles to sa
 ----
 
 # Software used
-- [PlatformIO](https://platformio.org/install)
-- [Adafruit nRF52 BSP](https://docs.platformio.org/en/latest/boards/nordicnrf52/adafruit_feather_nrf52832.html)
-- [Patch to use RAK4631 with PlatformIO](https://github.com/RAKWireless/WisBlock/blob/master/PlatformIO/RAK4630/README.md)
-- [SX126x-Arduino LoRaWAN library](https://github.com/beegee-tokyo/SX126x-Arduino)
-- [SparkFun SHTC3 Humidity and Temperature Sensor Library](https://platformio.org/lib/show/6539/SparkFun%20SHTC3%20Humidity%20and%20Temperature%20Sensor%20Library/installation)
-- [Adafruit LPS2X](https://platformio.org/lib/show/7084/Adafruit%20LPS2X)
-- [ClosedCube OPT3001](https://platformio.org/lib/show/838/ClosedCube%20OPT3001)
-- [WisBlock-API](https://platformio.org/lib/show/12807/WisBlock-API)
+- [PlatformIO](https://platformio.org/install) ⤴️
+- [Adafruit nRF52 BSP](https://docs.platformio.org/en/latest/boards/nordicnrf52/adafruit_feather_nrf52832.html) ⤴️
+- [Patch to use RAK4631 with PlatformIO](https://github.com/RAKWireless/WisBlock/blob/master/PlatformIO/RAK4630/README.md) ⤴️
+- [SX126x-Arduino LoRaWAN library](https://github.com/beegee-tokyo/SX126x-Arduino) ⤴️
+- [SparkFun SHTC3 Humidity and Temperature Sensor Library](https://platformio.org/lib/show/6539/SparkFun%20SHTC3%20Humidity%20and%20Temperature%20Sensor%20Library/installation) ⤴️
+- [Adafruit LPS2X](https://platformio.org/lib/show/7084/Adafruit%20LPS2X) ⤴️
+- [ClosedCube OPT3001](https://platformio.org/lib/show/838/ClosedCube%20OPT3001) ⤴️
+- [WisBlock-API-V2](https://platformio.org/lib/show/12807/WisBlock-API-V2) ⤴️
 
 ## _REMARK_
 The libraries are all listed in the **`platformio.ini`** and are automatically installed when the project is compiled.
@@ -47,25 +47,25 @@ The libraries are all listed in the **`platformio.ini`** and are automatically i
 
 # Setting up LoRaWAN credentials
 The LoRaWAN settings can be defined in three different ways. 
-- Over BLE with [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox)
+- Over BLE with [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox) ⤴️
 - Over USB with [AT Commands](./AT-Commands.md)
 - Hardcoded in the sources (_**ABSOLUTELY NOT RECOMMENDED**_)
 
 ## 1) Setup over BLE
-Using the [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox) you can connect to the WisBlock over BLE and setup all LoRaWAN parameters like
+Using the [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox) ⤴️ you can connect to the WisBlock over BLE and setup all LoRaWAN parameters like
 - Region
 - OTAA/ABP
 - Confirmed/Unconfirmed message
 - ...
 
-More details can be found in the [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox)
+More details can be found in the [WisBlock Toolbox](https://play.google.com/store/apps/details?id=tk.giesecke.wisblock_toolbox) ⤴️
 
 The device is advertising over BLE only the first 30 seconds after power up and then again for 15 seconds after wakeup for measurements. The device is advertising as **`RAK-GNSS-xx`** where xx is the BLE MAC address of the device.
 
 ## 2) Setup over USB port
 Using the AT command interface the WisBlock can be setup over the USB port.
 
-A detailed manual for the AT commands are in [AT-Commands.md](./AT-Commands.md)
+A detailed manual for the AT commands are in the [AT-Command-Manual](https://docs.rakwireless.com/RUI3/Serial-Operating-Modes/AT-Command-Manual/https://docs.rakwireless.com/RUI3/Serial-Operating-Modes/AT-Command-Manual/) ⤴️
 
 Here is an example for the typical AT commands required to get the device ready (EUI's and Keys are examples):
 ```log
@@ -75,12 +75,12 @@ AT+APPEUI=70b3d57ed00201e1
 AT+DEVEUI=ac1f09fffe03efdc
 // Setup AppKey
 AT+APPKEY=2b84e0b09b68e5cb42176fe753dcee79
-// Set automatic send frequency in seconds
-AT+SENDFREQ=60
+// Set automatic send interval in seconds
+AT+SENDINT=60
 // Set data rate
 AT+DR=3
 // Set LoRaWAN region (here US915)
-AT+BAND=8
+AT+BAND=5
 // Reset node to save the new parameters
 ATZ
 // After reboot, start join request
@@ -116,12 +116,7 @@ Hard coded credentials must be set in `void setup_app(void)`!
 _**REMARK 2**_    
 Keep in mind that parameters that are changed from with this method can be changed over AT command or BLE _**BUT WILL BE RESET AFTER A REBOOT**_!
 
-----
-
-# Packet data format
-The packet data is made compatible with the [RAK5205/RAK7205](https://docs.rakwireless.com/Product-Categories/WisTrio/RAK7205-5205/Overview). A detailed explanation and encoders for TTN and Chirpstack can be found in the [RAK5205 Documentation](https://docs.rakwireless.com/Product-Categories/WisTrio/RAK7205-5205/Quickstart/#decoding-sensor-data-on-chirpstack-and-ttn)
-
-_**REMARK!**_    
+_**REMARK 3**_    
 The data encoding is based on Cayenne LPP sensor ID's. This makes it very easy to visualize the sensor data in myDevices Cayenne.
 
 ----
@@ -165,7 +160,7 @@ build_flags =
 	-DNO_BLE_LED=1   ; 1 Disable blue LED as BLE notificator
 lib_deps = 
 	beegee-tokyo/SX126x-Arduino
-	beegee-tokyo/WisBlock-API
+	beegee-tokyo/WisBlock-API-V2
 	sparkfun/SparkFun SHTC3 Humidity and Temperature Sensor Library
 	adafruit/Adafruit LPS2X
 	closedcube/ClosedCube OPT3001
