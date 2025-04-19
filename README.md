@@ -65,7 +65,7 @@ The device is advertising over BLE only the first 30 seconds after power up and 
 ## 2) Setup over USB port
 Using the AT command interface the WisBlock can be setup over the USB port.
 
-A detailed manual for the AT commands are in the [AT-Command-Manual](https://docs.rakwireless.com/RUI3/Serial-Operating-Modes/AT-Command-Manual/https://docs.rakwireless.com/RUI3/Serial-Operating-Modes/AT-Command-Manual/) ⤴️
+A detailed manual for the AT commands are in the [AT-Command-Manual](https://docs.rakwireless.com/product-categories/software-apis-and-libraries/rui3/at-command-manual) ⤴️
 
 Here is an example for the typical AT commands required to get the device ready (EUI's and Keys are examples):
 ```log

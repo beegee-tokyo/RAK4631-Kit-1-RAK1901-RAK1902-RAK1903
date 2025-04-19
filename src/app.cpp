@@ -66,6 +66,7 @@ void setup_app(void)
 		}
 	}
 #endif
+	sprintf(g_custom_fw_ver, "WisBlock Kit 1 V%d.%d.%d", SW_VERSION_1, SW_VERSION_2, SW_VERSION_3);
 }
 
 /**
@@ -235,12 +236,10 @@ void app_event_handler(void)
 			}
 			else
 			{
-				uint8_t packet_buffer[g_solution_data.getSize() + 8];
-				memcpy(packet_buffer, g_lorawan_settings.node_device_eui, 8);
-				memcpy(&packet_buffer[8], g_solution_data.getBuffer(), g_solution_data.getSize());
+				g_solution_data.addDevID(0, &g_lorawan_settings.node_device_eui[4]);
 
 				// Send packet over LoRa
-				if (send_p2p_packet(packet_buffer, g_solution_data.getSize() + 8))
+				if (send_p2p_packet(g_solution_data.getBuffer(), g_solution_data.getSize()))
 				{
 					MYLOG("APP", "P2P packet enqueued");
 				}
@@ -292,10 +291,12 @@ void lora_data_handler(void)
 		if (g_join_result)
 		{
 			MYLOG("APP", "Successfully joined network");
+			AT_PRINTF("+EVT:JOINED");
 		}
 		else
 		{
 			MYLOG("APP", "Join network failed");
+			AT_PRINTF("+EVT:JOIN_FAILED_TX_TIMEOUT");
 			/// \todo here join could be restarted.
 			lmh_join();
 
@@ -312,10 +313,27 @@ void lora_data_handler(void)
 	{
 		g_task_event_type &= N_LORA_TX_FIN;
 
-		MYLOG("APP", "LPWAN TX cycle %s", g_rx_fin_result ? "finished ACK" : "failed NAK");
+		MYLOG("APP", "%s TX cycle %s", g_lorawan_settings.lorawan_enable ? "LoRaWAN" : "LoRa", g_lorawan_settings.lorawan_enable ? g_rx_fin_result ? "finished ACK" : "failed NAK" : "finished");
+
+		if (g_lorawan_settings.lorawan_enable)
+		{
+			if (g_lorawan_settings.confirmed_msg_enabled == LMH_UNCONFIRMED_MSG)
+			{
+				AT_PRINTF("+EVT:TX_DONE");
+			}
+			else
+			{
+				AT_PRINTF("+EVT:%s", g_rx_fin_result ? "SEND_CONFIRMED_OK" : "SEND_CONFIRMED_FAILED");
+			}
+		}
+		else
+		{
+			AT_PRINTF("+EVT:TXP2P_DONE");
+		}
+
 		if (g_ble_uart_is_connected)
 		{
-			g_ble_uart.printf("LPWAN TX cycle %s", g_rx_fin_result ? "finished ACK" : "failed NAK");
+			g_ble_uart.printf("%s TX cycle %s", g_lorawan_settings.lorawan_enable ? "LoRaWAN" : "LoRa", g_rx_fin_result ? "finished ACK" : "failed NAK");
 		}
 
 		if (!g_rx_fin_result)
@@ -354,6 +372,22 @@ void lora_data_handler(void)
 		}
 		lora_busy = false;
 		MYLOG("APP", "%s", log_buff);
+
+		log_idx = 0;
+		for (int idx = 0; idx < g_rx_data_len; idx++)
+		{
+			sprintf(&log_buff[log_idx], "%02X", g_rx_lora_data[idx]);
+			log_idx += 2;
+		}
+
+		if (g_lorawan_settings.lorawan_enable)
+		{
+			AT_PRINTF("+EVT:RX_1:%d:%d:UNICAST:%d:%s", g_last_rssi, g_last_snr, g_last_fport, log_buff);
+		}
+		else
+		{
+			AT_PRINTF("+EVT:RXP2P:%d:%d:%s", g_last_rssi, g_last_snr, log_buff);
+		}
 
 		if (g_ble_uart_is_connected && g_enable_ble)
 		{

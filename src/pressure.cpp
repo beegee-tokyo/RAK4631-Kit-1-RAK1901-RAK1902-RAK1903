@@ -28,11 +28,12 @@ bool init_press(void)
 
 void read_press(void)
 {
-	lps22hb.setDataRate(LPS22_RATE_75_HZ); // LPS22_RATE_ONE_SHOT
-	MYLOG("PRESS", "Reading LPS22HB");
-	delay(1000);
 	sensors_event_t temp_event;
 	sensors_event_t pressure_event;
+	lps22hb.setDataRate(LPS22_RATE_75_HZ); // LPS22_RATE_ONE_SHOT
+	MYLOG("PRESS", "Reading LPS22HB");
+	lps22hb.getEvent(&pressure_event, &temp_event);
+	delay(1000);
 
 	lps22hb.getEvent(&pressure_event, &temp_event);
 
