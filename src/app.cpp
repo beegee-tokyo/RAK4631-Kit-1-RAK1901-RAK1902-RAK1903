@@ -129,6 +129,9 @@ bool init_app(void)
 	{
 		read_light();
 	}
+
+	// Disable modules power
+	digitalWrite(WB_IO2, LOW);
 	return init_result;
 }
 
@@ -144,6 +147,9 @@ void app_event_handler(void)
 	{
 		g_task_event_type &= N_STATUS;
 		MYLOG("APP", "Timer wakeup");
+
+		// Enable modules power
+		digitalWrite(WB_IO2, HIGH);
 
 		// If BLE is enabled, restart Advertising
 		if (g_enable_ble)
@@ -249,6 +255,8 @@ void app_event_handler(void)
 				}
 			}
 		}
+		// Disable modules power
+		digitalWrite(WB_IO2, LOW);
 	}
 }
 

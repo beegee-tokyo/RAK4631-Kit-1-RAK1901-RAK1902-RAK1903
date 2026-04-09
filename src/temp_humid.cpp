@@ -20,12 +20,15 @@ bool init_th(void)
 		MYLOG("T_H", "Could not initialize SHTC3");
 		return false;
 	}
+	shtc3.sleep();
 	return true;
 }
 
 void read_th(void)
 {
 	MYLOG("T_H", "Reading SHTC3");
+	shtc3.sleep();
+	delay(500);
 	shtc3.update();
 
 	if (shtc3.lastStatus == SHTC3_Status_Nominal)
